@@ -8,12 +8,33 @@
 </head>
 <body>
     <h1>Screen Sharing</h1>
+    <button id="shareScreen">Share Screen</button>
     <video id="remoteVideo" autoplay style="width: 100%; max-height: 100vh;"></video>
+    <video id="localVideo" autoplay muted style="width: 100%; max-height: 30vh;"></video>
     <script>
-        const signalingServer = "http://<your_local_ip>:5000"; // Replace with signaling server IP
+        const signalingServer = "http://<your_local_ip>:5000"; // Replace with your server IP
         const socket = io(signalingServer);
         const peerConnection = new RTCPeerConnection();
         const remoteVideo = document.getElementById("remoteVideo");
+        const localVideo = document.getElementById("localVideo");
+
+        // Set up event to handle screen sharing
+        document.getElementById("shareScreen").addEventListener("click", async () => {
+            try {
+                const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                localVideo.srcObject = stream;
+                stream.getTracks().forEach((track) => {
+                    peerConnection.addTrack(track, stream);
+                });
+
+                // Create and send offer
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                socket.emit("offer", offer);
+            } catch (error) {
+                console.error("Error sharing screen:", error);
+            }
+        });
 
         peerConnection.ontrack = (event) => {
             remoteVideo.srcObject = event.streams[0];
@@ -24,6 +45,10 @@
             const answer = await peerConnection.createAnswer();
             await peerConnection.setLocalDescription(answer);
             socket.emit("answer", answer);
+        });
+
+        socket.on("answer", async (answer) => {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
         });
 
         socket.on("candidate", async (candidate) => {
