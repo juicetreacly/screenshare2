@@ -12,7 +12,7 @@
     <video id="remoteVideo" autoplay style="width: 100%; max-height: 100vh;"></video>
     <video id="localVideo" autoplay muted style="width: 100%; max-height: 30vh;"></video>
     <script>
-        const signalingServer = "http://<your_local_ip>:5000"; // Replace with your server IP
+        const signalingServer = "http://192.168.0.102:5000"; // Replace with your server IP
         const socket = io(signalingServer);
         const peerConnection = new RTCPeerConnection();
         const remoteVideo = document.getElementById("remoteVideo");
